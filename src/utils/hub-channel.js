@@ -26,7 +26,7 @@ const HUB_CREATOR_PERMISSIONS = [
 ];
 const VALID_PERMISSIONS =
   HUB_CREATOR_PERMISSIONS +
-  ["tweet", "spawn_camera", "spawn_drawing", "spawn_and_move_media", "pin_objects", "spawn_emoji", "fly"];
+  ["tweet", "spawn_camera", "spawn_drawing", "spawn_and_move_media", "pin_objects", "spawn_emoji", "fly", "group"];
 
 export default class HubChannel extends EventTarget {
   constructor(store, hubId) {
@@ -257,6 +257,43 @@ export default class HubChannel extends EventTarget {
     this.channel.push("message", { body, type });
   };
 
+  sendGroup = (type = "group") => {
+    var players = Object.keys(NAF.connection.adapter.occupants);
+    this.shuffle(players);
+    let body = "";
+    for (const player of players) {
+      body = body + player + " ";
+    }
+    this.channel.push("message", { body, type });
+  };
+
+  shuffle = (array) => {
+    for (let i = array.length - 1; i > 0; i--) {
+      let j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  }
+
+  divideGroup = (body, type = "divide") => {
+    this.channel.push("message", { body, type });
+  };
+
+  sendUngroup = (body, type = "ungroup") => {
+    this.channel.push("message", { body, type });
+  };
+
+  sendVote = (body, type = "vote") => {
+    this.channel.push("message", { body, type });
+  };
+
+  initGame = (body, type = "runGame") => {
+    this.channel.push("message", { body, type });
+  };
+
+  endGame = (body, type = "endGame") => {
+    this.channel.push("message", { body, type });
+  };
+
   _getCreatorAssignmentToken = () => {
     const creatorAssignmentTokenEntry =
       this.store.state.creatorAssignmentTokens &&
@@ -383,6 +420,16 @@ export default class HubChannel extends EventTarget {
     NAF.connection.entities.completeSync(sessionId);
     this.channel.push("unblock", { session_id: sessionId });
     this._blockedSessionIds.delete(sessionId);
+  };
+
+  unhideAll = () => {
+    if (this._blockedSessionIds.size == 0){return;}
+    for (let id of this._blockedSessionIds) {
+      NAF.connection.adapter.unblock(id);
+      NAF.connection.entities.completeSync(id);
+      this.channel.push("unblock", { session_id: id });
+      this._blockedSessionIds.delete(id);
+    }
   };
 
   isHidden = sessionId => this._blockedSessionIds.has(sessionId);

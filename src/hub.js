@@ -1521,6 +1521,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     handleIncomingNAF(data);
   });
 
+  var gameHost = 0, duringGame = false; 
+  var myTeam = new Set(); 
+  var otherTeam = new Set();
+
   hubPhxChannel.on("message", ({ session_id, type, body, from }) => {
     const getAuthor = () => {
       const userInfo = hubChannel.presence.state[session_id];
@@ -1536,13 +1540,75 @@ document.addEventListener("DOMContentLoaded", async () => {
     const name = getAuthor();
     const maySpawn = scene.is("entered");
 
+    if(type !== "chat"){
+      switch(type){
+        case "divide":
+          if(gameHost == session_id){
+            for(let oppo of otherTeam){
+              hubChannel.hide(oppo);
+            }
+          }else{
+            body = "ask the host for permision"
+          }
+          break;
+
+        case "group":
+          if(gameHost == session_id){
+            var players = body.trim().split(/\s+/);
+            let indexHost = players.indexOf(gameHost);
+            if(indexHost > -1) {players.splice(index,1)}
+            let teamA = new Set(players.splice(Math.floor(players.length/2)+1));
+            let teamB = new Set(players);
+            if(teamA.has(NAF.clientId)){
+              myTeam = teamA;
+              otherTeam = teamB;
+            }else{
+              myTeam = teamB;
+              otherTeam = teamA;
+            }
+          }
+          body = null;
+          break;
+        case "ungroup":
+          if(gameHost == session_id){
+            hubChannel.unhideAll();
+          }else{
+            body = "ask the host for permision"
+          }
+          break;
+
+        case "vote":
+          if(gameHost !== NAF.clientId){
+            body = "voted."
+          }
+          break;
+
+        case "runGame":
+          if(!duringGame){
+            gameHost = session_id;
+            duringGame = true;
+          }else{
+            body = "init failed."
+          }
+          break;
+        case "endGame":
+          if(!duringGame || gameHost == session_id){
+            duringGame =false;
+            gameHost = 0;
+            myTeam.clear();
+            otherTeam.clear();
+          }
+          break;
+      }
+      type = "chat";
+    }
+
     const incomingMessage = { name, type, body, maySpawn, sessionId: session_id };
 
     if (scene.is("vr-mode")) {
       createInWorldLogMessage(incomingMessage);
     }
-
-    addToPresenceLog(incomingMessage);
+    if(body){addToPresenceLog(incomingMessage);}
   });
 
   hubPhxChannel.on("hub_refresh", ({ session_id, hubs, stale_fields }) => {

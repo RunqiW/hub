@@ -150,6 +150,43 @@ export default class MessageDispatch {
           this.log(`Positional Audio ${shouldEnablePositionalAudio ? "enabled" : "disabled"}.`);
         }
         break;
+
+      case "group":
+        {
+          this.hubChannel.sendGroup();
+        }
+        break;
+      case "divide":
+        {
+          this.hubChannel.divideGroup("Group divided.");
+        }
+      case "ungroup":
+        {
+          this.hubChannel.sendUngroup("Group merged.");
+        }
+        break;
+
+      case "conceal":
+        {
+          this.hubChannel.sendVote("conceal");
+        }
+        break;
+      case "confess":
+        {
+          this.hubChannel.sendVote("confess");
+        }
+        break;
+
+      case "rungame":
+        {
+          this.hubChannel.initGame("Game start.");
+        }
+        break;
+      case "endgame":
+        {
+          this.hubChannel.endGame("Game end.");
+        }
+        break;
     }
   };
 }

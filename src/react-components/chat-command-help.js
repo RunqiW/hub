@@ -21,10 +21,12 @@ export default class ChatCommandHelp extends Component {
       "vrstats",
       "scene <scene url>",
       "rename <new name>",
-      "audiomode"
+      "audiomode",
+      "conceal",
+      "confess"
     ];
 
-    if (window.APP.hubChannel && window.APP.hubChannel.can("fly")) {
+    if (window.APP.hubChannel && window.APP.hubChannel.can("group")) {
       commands.push("fly");
     }
 
